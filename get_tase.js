@@ -1,4 +1,6 @@
 // get_tase.js
+// Gil Dafnai and Jonathan Sidi
+
 
 var page = require('webpage').create();
 var fs = require('fs');
