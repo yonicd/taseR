@@ -1,7 +1,15 @@
-var page = require('webpage').create();
+# get_tase.js
+# Gil Dafnai and Jonathan Sidi
+tase.security=function(companyID,shareID,subDataType=0){
+url=paste0("http://www.tase.co.il/Eng/general/company/Pages/companyHistoryData.aspx?companyID=",
+           companyID,
+           "&subDataType=",subDataType,
+           "&shareID=",shareID)
+
+writeLines(sprintf("var page = require('webpage').create();
                     var fs = require('fs');
                     var path = 'tase_out.html';
-                    var webPAgeAddress  = 'http://www.tase.co.il/Eng/general/company/Pages/companyHistoryData.aspx?companyID=001363&subDataType=0&shareID=01100007';
+                    var webPAgeAddress  = '%s';
                    page.open(webPAgeAddress , function (status) {
   	
   	page.includeJs('http://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js', function() {
@@ -25,4 +33,4 @@ var page = require('webpage').create();
              phantom.exit();
            } , 8000);	
            });
-});
+});",url),con="get_tase.js")}
