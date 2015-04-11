@@ -1,10 +1,12 @@
 # get_tase.js
 # Gil Dafnai and Jonathan Sidi
-tase.security=function(companyID,shareID,subDataType=0){
+tase.security=function(companyID,shareID,From.Date,To.Date,subDataType=0,Freq){
 url=paste0("http://www.tase.co.il/Eng/general/company/Pages/companyHistoryData.aspx?companyID=",
            companyID,
            "&subDataType=",subDataType,
            "&shareID=",shareID)
+
+Freq.Btn=paste0("#ctl00_SPWebPartManager1_g_301c6a3d_c058_41d6_8169_6d26c5d97050_ctl00_HistoryData1_rbFrequency",which(c("daily","weekly","monthly","annual")%in%Freq))
 
 writeLines(sprintf("var page = require('webpage').create();
                     var fs = require('fs');
@@ -19,9 +21,10 @@ writeLines(sprintf("var page = require('webpage').create();
     	var myBtnValue = page.evaluate(function() {
     		
     		var myBtn = $('#trhistory0').find(':button') ;
-        $('#ctl00_SPWebPartManager1_g_301c6a3d_c058_41d6_8169_6d26c5d97050_ctl00_HistoryData1_rbPeriod8').prop('checked', true)
-        $('#ctl00_SPWebPartManager1_g_301c6a3d_c058_41d6_8169_6d26c5d97050_ctl00_HistoryData1_dailyFromCalendar_TaseCalendar_dateInput_TextBox').val('01/01/2015');
-        $('#ctl00_SPWebPartManager1_g_301c6a3d_c058_41d6_8169_6d26c5d97050_ctl00_HistoryData1_dailyToCalendar_TaseCalendar_dateInput_TextBox').val('11/04/2015');
+        $('#ctl00_SPWebPartManager1_g_301c6a3d_c058_41d6_8169_6d26c5d97050_ctl00_HistoryData1_rbPeriod8').prop('checked', true);
+        $('#ctl00_SPWebPartManager1_g_301c6a3d_c058_41d6_8169_6d26c5d97050_ctl00_HistoryData1_dailyFromCalendar_TaseCalendar_dateInput_TextBox').val('%s');
+        $('#ctl00_SPWebPartManager1_g_301c6a3d_c058_41d6_8169_6d26c5d97050_ctl00_HistoryData1_dailyToCalendar_TaseCalendar_dateInput_TextBox').val('%s');
+        $('%s').prop('checked', true);
         myBtn.click();
         return myBtn.attr('value') ;
                    });
@@ -35,4 +38,4 @@ writeLines(sprintf("var page = require('webpage').create();
              phantom.exit();
            } , 8000);	
            });
-});",url),con="get_tase.js")}
+});",url,From.Date,To.Date,Freq.Btn),con="get_tase.js")}
