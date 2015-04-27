@@ -18,14 +18,14 @@ var page = require('webpage').create();
                      console.log('clicked') ;			
                      //console.log(myBtnValue) ;
                      
-
-                    page.onPageCreated = function(newPage) {
-                      console.log('A new child page was created! Its requested URL is not yet available, though.');
+                    //page.onPageCreated = function(newPage) {
+                    //  console.log('A new child page was created! Its requested URL is not yet available, though.');
                       // Decorate
-                      newPage.onClosing = function(closingPage) {
-                        console.log('A child page is closing: ' + closingPage.url);
-                      };
-                    };
+                    //  newPage.onClosing = function(closingPage) {
+                    //    console.log('A child page is closing: ' + closingPage.url);
+                    //  };
+                    //};
+
 
                      window.setTimeout(function () {
                      console.log('time out') ;

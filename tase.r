@@ -1,12 +1,20 @@
 setwd("C:\\Users\\yoni\\Documents\\GitHub\\tase")
 
+stockIDs=read.csv("stockIDs.csv")
+tickers=read.csv("tickers.csv")
+
+
+
+stockID=left_join(tickers,stockIDs,by="shareID")%>%rename(Name.Full=name)
+
+
 library(lubridate)
 library(XML)
 library(plyr)
 library(dplyr)
 library(RSelenium)
 
-source("call_tase.r");source("call_tase_index.r");source("call_tase_index_intraday.r")
+source("call_tase.r");source("call_tase_index.r");source("call_tase_index_intraday.r");source("call_tase_index_components.r")
 
 url='http://www.tase.co.il/Eng/Management/GeneralPages/Pages/GridOnSeparatePage.aspx?Action=2&subDataType=2&IndexId=137&day=3&date=634138848000000000&GridId=143&CurGuid={F9AF0818-85CC-43D3-AE34-76D89C0EB977}'
 
@@ -23,6 +31,9 @@ tase.index=tase.fetch(indexID='142',
 tase.index.intraday=tase.fetch(indexID='142',
                       From.Date = format(Sys.Date()-months(3),"%d/%m/%Y"),intraday=T)
 
+tase.index.component=tase.fetch(indexID='142',
+                               From.Date = format(Sys.Date()-months(3),"%d/%m/%Y"),intraday=T)
+
 tase.fetch=function(cID='',sID='',indexID='',From.Date=format(Sys.Date()-months(1),"%d/%m/%Y"),To.Date=format(Sys.Date(),"%d/%m/%Y"),Dtype='0',Freq="daily",intraday=F){
   if(cID!=''&sID!='')  tase.security(companyID=cID,shareID=sID,From.Date,To.Date,subDataType=Dtype,Freq)
   
@@ -30,7 +41,9 @@ tase.fetch=function(cID='',sID='',indexID='',From.Date=format(Sys.Date()-months(
   
   if(indexID!=''&intraday==T)  tase.index.intraday(indexID,From.Date,To.Date)
   
-  #system("phantomjs.exe get_tase.js")
+  if(indexID!=''&intraday==T)  tase.index.component(indexID,From.Date)
+  
+  #system("phantomjs.exe get_tase_popup.js")
   
   pJS <- phantom()
   remDr <- remoteDriver(browserName = "phantom")
@@ -43,9 +56,14 @@ tase.fetch=function(cID='',sID='',indexID='',From.Date=format(Sys.Date()-months(
   url="tase_out.html"
   dataNode =getNodeSet(htmlParse(url),("//table[contains(@id,'gridHistoryData_DataGrid1')]"))
   dataNode =getNodeSet(htmlParse(url),("//table[contains(@id,'DataGrid1')]"))
+  dataNode =getNodeSet(htmlParse(url),("//table[contains(@id,'tabAllShares')]
+                                        //td//a//@onclick"))
   metaNode =getNodeSet(htmlParse(url),("//table[contains(@id,'securityGrid_DataGrid1')]"))
   
-  x=unlist(sapply(xpathSApply(dataNode[[1]],'//a',xmlAttrs),'[[',1))
+  
+  y=getNodeSet(htmlParse(paste0("www.tase.co.il",str_split(dataNode[[4]][1],"'",n=3)[[1]][2]),isURL = T),"//table")
+  
+  x=unlist(sapply(xpathSApply(dataNode[[1]],"//td[@onclick]",xmlAttrs),'[[',1))
   x=x[grepl("csv",x)]
   
   tase=mdply(x,.fun = function(xin){

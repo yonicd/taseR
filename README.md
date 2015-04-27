@@ -17,4 +17,4 @@ todo:
   - otc trading
   - t-bills
   - batch downloading
-  - combining to PerformanceAnalystics library for further analysis cabilities
+  - combining to PerformanceAnalystics library for further analysis capabilities
