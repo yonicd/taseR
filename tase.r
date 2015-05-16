@@ -3,10 +3,9 @@ setwd("C:\\Users\\yoni\\Documents\\GitHub\\tase")
 stockIDs=read.csv("stockIDs.csv")
 tickers=read.csv("tickers.csv")
 
-
-
 stockID=left_join(tickers,stockIDs,by="shareID")%>%rename(Name.Full=name)
 
+stockID=read.csv("stockID.csv")
 
 library(lubridate)
 library(XML)
@@ -28,22 +27,30 @@ tase=tase.fetch(cID='000281',
 tase.index=tase.fetch(indexID='142',
                 From.Date = format(Sys.Date()-months(3),"%d/%m/%Y"))
 
-tase.index.intraday=tase.fetch(indexID='142',
+tase.index.intraday=tase.fetch(indexID='137',
                       From.Date = format(Sys.Date()-months(3),"%d/%m/%Y"),intraday=T)
 
 tase.index.component=tase.fetch(indexID='142',
-                               From.Date = format(Sys.Date()-months(3),"%d/%m/%Y"),intraday=T)
+                               From.Date = format(Sys.Date()-months(3),"%d/%m/%Y"))
 
 tase.fetch=function(cID='',sID='',indexID='',From.Date=format(Sys.Date()-months(1),"%d/%m/%Y"),To.Date=format(Sys.Date(),"%d/%m/%Y"),Dtype='0',Freq="daily",intraday=F){
+  
+#Security  
   if(cID!=''&sID!='')  tase.security(companyID=cID,shareID=sID,From.Date,To.Date,subDataType=Dtype,Freq)
+  if(cID!=''&sID!='')  tase.security.otc(companyID=cID,shareID=sID,From.Date,To.Date)
+  if(cID!=''&sID!='')  tase.security.intraday(companyID=cID,shareID=sID)
   
+#Treasure Bills  
+  if(cID!=''&sID!='')  tase.tbill(companyID=cID,shareID=sID,From.Date,To.Date,subDataType=Dtype,Freq)
+  if(cID!=''&sID!='')  tase.tbill.otc(companyID=cID,shareID=sID,From.Date,To.Date)
+  if(cID!=''&sID!='')  tase.tbill.intraday(companyID=cID,shareID=sID)
+
+#Index  
   if(indexID!=''&intraday==F)  tase.index(indexID,From.Date,To.Date,Freq)
-  
   if(indexID!=''&intraday==T)  tase.index.intraday(indexID,From.Date,To.Date)
-  
   if(indexID!=''&intraday==T)  tase.index.component(indexID,From.Date)
   
-  #system("phantomjs.exe get_tase_popup.js")
+  #system("phantomjs.exe get_tase.js")
   
   pJS <- phantom()
   remDr <- remoteDriver(browserName = "phantom")
