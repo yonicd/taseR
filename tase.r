@@ -13,7 +13,7 @@ library(plyr)
 library(dplyr)
 library(RSelenium)
 
-source("call_tase.r");source("call_tase_index.r");source("call_tase_index_intraday.r");source("call_tase_index_components.r")
+sapply(list.files(pattern = "call"),source,echo=F)
 
 url='http://www.tase.co.il/Eng/Management/GeneralPages/Pages/GridOnSeparatePage.aspx?Action=2&subDataType=2&IndexId=137&day=3&date=634138848000000000&GridId=143&CurGuid={F9AF0818-85CC-43D3-AE34-76D89C0EB977}'
 
