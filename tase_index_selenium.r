@@ -6,6 +6,8 @@ library(dplyr)
 library(RSelenium)
 library(stringr)
 
+options(scipen=999)
+
 setwd("C:\\Users\\yoni\\Documents\\GitHub\\tase")
 
 RSelenium::startServer()
@@ -13,10 +15,10 @@ remDr <- remoteDriver()
 remDr$open(silent = F)
 
 df.in=data.frame(Name=c("TA25","TA100"),indexID=c(142,137))
-df.in$from.date=rep(format(Sys.Date()-days(2),"%d/%m/%Y"),2)
+df.in$from.date=rep(format(Sys.Date()-days(1),"%d/%m/%Y"),2)
+df.in$from.date=format(as.Date("2010-07-01")+days(0:10),"%d/%m/%Y")
+
 df.in$to.date=rep(format(Sys.Date(),"%d/%m/%Y"),2)
-
-
 
 tase.index.daily=ddply(df.in,.(Name),.fun = function(df){
   #set url
@@ -99,5 +101,31 @@ tase.index.otc=ddply(df.in,.(Name),.fun = function(df){
   tase.out=readHTMLTable(dataNode[[1]],header = T)%>%mutate_each(funs(as.numeric(gsub("[,|%]","",.))),-contains("Date"))
   return(tase.out)},
   .progress = "text")
+
+
+df.in=data.frame(Trade.Date=as.Date("2010-07-01")+days(0:30))%>%mutate(indexID=137,w=as.numeric(format(Trade.Date,"%u")))%>%filter(!w%in%c(5,6))
+
+tase.index.components=ddply(df.in,.(Trade.Date,indexID),.fun=function(df){
+    date.url=1e9*(24*6*6)*as.numeric(df$Trade.Date-as.Date("0001-01-01"))
+
+    url=paste0("http://www.tase.co.il/Eng/Management/GeneralPages/Pages/GridOnSeparatePage.aspx?Action=3&subDataType=2&IndexId=",df$indexID,
+               "&day=3&date=",date.url,
+               "&GridId=143&CurGuid={F7A1F1E8-21FF-44EC-B115-B516F34D96BC}")
+    
+    remDr$navigate(url)
+    out=htmlParse(remDr$getPageSource(),asText = T)
+    dataNode=getNodeSet(out,"//table[contains(@id,'NiaROGrid1_DataGrid1')]")
+    if(length(dataNode)!=0){ 
+      tase.out=readHTMLTable(dataNode[[1]],header = T)%>%mutate_each(funs(as.Date(.,"%d/%m/%Y")),contains("date"))
+    }else{
+      tase.out=data.frame(matrix(NA,ncol=11,nrow=1))
+      }
+    
+    names(tase.out)=c("Name","Symbol","ISIN","Index.Adj.Cap","Weight","Weight.Factor","IANS","IAFF","IAFF.Class","IAFF.Rate","Last.IANS.Update")
+    
+    tase.out=tase.out%>%mutate_each_(funs(as.numeric(gsub("[,|%]","",.))),c("Index.Adj.Cap","Weight","Weight.Factor","IANS","IAFF","IAFF.Rate"))
+    Sys.sleep(2)
+    return(tase.out)
+},.progress="text")
 
 remDr$closeall()
