@@ -8,17 +8,13 @@ library(stringr)
 
 options(scipen=999)
 
-setwd("C:\\Users\\yoni\\Documents\\GitHub\\tase")
+df.in=data.frame(Name=c("TA25","TA100"),indexID=c(142,137))
+df.in$from.date=rep(format(Sys.Date()-days(1),"%d/%m/%Y"),2)
+df.in$to.date=rep(format(Sys.Date(),"%d/%m/%Y"),2)
 
 RSelenium::startServer()
 remDr <- remoteDriver()
 remDr$open(silent = F)
-
-df.in=data.frame(Name=c("TA25","TA100"),indexID=c(142,137))
-df.in$from.date=rep(format(Sys.Date()-days(1),"%d/%m/%Y"),2)
-df.in$from.date=format(as.Date("2010-07-01")+days(0:10),"%d/%m/%Y")
-
-df.in$to.date=rep(format(Sys.Date(),"%d/%m/%Y"),2)
 
 tase.index.daily=ddply(df.in,.(Name),.fun = function(df){
   #set url
@@ -102,9 +98,6 @@ tase.index.otc=ddply(df.in,.(Name),.fun = function(df){
   return(tase.out)},
   .progress = "text")
 
-
-df.in=data.frame(Trade.Date=as.Date("2010-07-01")+days(0:30))%>%mutate(indexID=137,w=as.numeric(format(Trade.Date,"%u")))%>%filter(!w%in%c(5,6))
-
 tase.index.components=ddply(df.in,.(Trade.Date,indexID),.fun=function(df){
     date.url=1e9*(24*6*6)*as.numeric(df$Trade.Date-as.Date("0001-01-01"))
 
@@ -126,6 +119,7 @@ tase.index.components=ddply(df.in,.(Trade.Date,indexID),.fun=function(df){
     tase.out=tase.out%>%mutate_each_(funs(as.numeric(gsub("[,|%]","",.))),c("Index.Adj.Cap","Weight","Weight.Factor","IANS","IAFF","IAFF.Rate"))
     Sys.sleep(2)
     return(tase.out)
-},.progress="text")
+},
+  .progress="text")
 
 remDr$closeall()

@@ -6,22 +6,21 @@ library(dplyr)
 library(RSelenium)
 library(stringr)
 
-setwd("C:\\Users\\yoni\\Documents\\GitHub\\tase")
-
-stockID=read.csv("stockID.csv")
+stockID=read.csv("~/RawFiles/stockID.csv")
 
 stockID=stockID%>%mutate(companyID=str_pad(companyID,width = 6,side="left",pad = "0"),
-                 shareID=str_pad(shareID,width = 8,side="left",pad = "0"))
+                         shareID=str_pad(shareID,width = 8,side="left",pad = "0"))
 
-RSelenium::startServer()
-remDr <- remoteDriver()
-remDr$open(silent = F)
 
 df.in=stockID%>%filter(Name%in%c("TEVA","LEUMI"))
 df.in$from.date=rep(format(Sys.Date()-months(2),"%d/%m/%Y"),2)
 df.in$to.date=rep(format(Sys.Date(),"%d/%m/%Y"),2)
 
-  tase.security.daily=ddply(df.in,.(Name),.fun = function(df){
+RSelenium::startServer()
+remDr <- remoteDriver()
+remDr$open(silent = F)
+
+tase.security.daily=ddply(df.in,.(Name),.fun = function(df){
     #set url
       url=paste0("http://www.tase.co.il/Eng/general/company/Pages/companyHistoryData.aspx?companyID=",
              df$companyID,
@@ -85,7 +84,7 @@ tase.security.intraday=ddply(df.in,.(Name),.fun = function(df){
       select(-c(x,date))%>%arrange(datetime)
     tase.out$datetime=tase.out$datetime+unlist(sapply((tase.out%>%count(Time))$n,seq,from=1))
   return(tase.out)},
-.progress = "text")
+  .progress = "text")
 
 tase.security.otc=ddply(df.in,.(Name),.fun = function(df){
 url=paste0("http://www.tase.co.il/Eng/general/company/Pages/companyHistoryData.aspx?companyID=",
@@ -109,6 +108,6 @@ out=htmlParse(remDr$getPageSource(),asText = T)
 dataNode =getNodeSet(out,("//table[contains(@id,'gridHistoryData_DataGrid1')]"))
 tase.out=readHTMLTable(dataNode[[1]],header = T)%>%mutate_each(funs(as.numeric(gsub("[,|%]","",.))),-contains("Date"))
 return(tase.out)},
-.progress = "text")
+  .progress = "text")
 
 remDr$closeall()
