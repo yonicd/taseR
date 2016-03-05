@@ -1,31 +1,12 @@
-library(lubridate)
-library(rvest)
-library(XML)
-library(plyr)
-library(dplyr)
-library(RSelenium)
-library(stringr)
-
-stockID=read.csv("~/RawFiles/stockID.csv")
-
-stockID=stockID%>%mutate(companyID=str_pad(companyID,width = 6,side="left",pad = "0"),
-                         shareID=str_pad(shareID,width = 8,side="left",pad = "0"))
-
-
-df.in=stockID%>%filter(Name%in%c("TEVA","LEUMI"))
-df.in$from.date=rep(format(Sys.Date()-months(2),"%d/%m/%Y"),2)
-df.in$to.date=rep(format(Sys.Date(),"%d/%m/%Y"),2)
-
-RSelenium::startServer()
-remDr <- remoteDriver()
-remDr$open(silent = F)
+require(stringr);require(rvest);require(plyr);require(dplyr)
+options(scipen=999)
 
 tase.security.daily=ddply(df.in,.(Name),.fun = function(df){
     #set url
       url=paste0("http://www.tase.co.il/Eng/general/company/Pages/companyHistoryData.aspx?companyID=",
              df$companyID,
              "&subDataType=",0,
-             "&shareID=",df$shareID)
+             "&shareID=",df$secID)
     #navigate to webpage
       remDr$navigate(url)
     #enter ui variables
@@ -61,7 +42,7 @@ tase.security.intraday=ddply(df.in,.(Name),.fun = function(df){
         url=paste0("http://www.tase.co.il/Eng/general/company/Pages/companyHistoryData.aspx?companyID=",
                     df$companyID,
                     "&subDataType=0",
-                    "&shareID=",df$shareID)
+                    "&shareID=",df$secID)
     #navigate to webpage
       remDr$navigate(url)
     #click button
@@ -90,7 +71,7 @@ tase.security.otc=ddply(df.in,.(Name),.fun = function(df){
 url=paste0("http://www.tase.co.il/Eng/general/company/Pages/companyHistoryData.aspx?companyID=",
            df$companyID,
            "&subDataType=0",
-           "&shareID=",df$shareID)
+           "&shareID=",df$secID)
 #navigate to webpage
 remDr$navigate(url)
 #set ui
@@ -109,5 +90,3 @@ dataNode =getNodeSet(out,("//table[contains(@id,'gridHistoryData_DataGrid1')]"))
 tase.out=readHTMLTable(dataNode[[1]],header = T)%>%mutate_each(funs(as.numeric(gsub("[,|%]","",.))),-contains("Date"))
 return(tase.out)},
   .progress = "text")
-
-remDr$closeall()
