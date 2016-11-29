@@ -1,6 +1,7 @@
 require(rvest);require(plyr);require(dplyr)
 options(scipen=999)
 
+
 tase.index.daily=ddply(df.in,.(Name),.fun = function(df){
   #set url
   url=paste0("http://www.tase.co.il/Eng/MarketData/Indices/MarketCap/Pages/IndexHistoryData.aspx?Action=1&addTab=&IndexId=",df$secID)
@@ -8,13 +9,13 @@ tase.index.daily=ddply(df.in,.(Name),.fun = function(df){
   #navigate to webpage
   con$navigate(url)
   #enter ui variables
-  
-  webElem <- con$findElement(using = 'xpath', value = '//*[@id="ctl00_SPWebPartManager1_g_b2f63986_2b4a_438d_b1b1_fb08c9e1c862_ctl00_HistoryData1_rbFrequency1"]')
+  prefix="ctl00_SPWebPartManager1_g_b2f63986_2b4a_438d_b1b1_fb08c9e1c862_ctl00_HistoryData1_"
+  webElem <- con$findElement(using = 'xpath', value = paste0('//*[@id="',prefix,'rbFrequency1"]'))
   webElem$setElementAttribute(attributeName = 'checked',value = 'true')
-  webElem <- con$findElement(using = 'xpath', value = '//*[@id="ctl00_SPWebPartManager1_g_b2f63986_2b4a_438d_b1b1_fb08c9e1c862_ctl00_HistoryData1_rbPeriod8"]')
+  webElem <- con$findElement(using = 'xpath', value = paste0('//*[@id="',prefix,'rbPeriod8"]'))
   webElem$setElementAttribute(attributeName = 'checked',value = 'true')
-  con$executeScript(paste0("$('#ctl00_SPWebPartManager1_g_b2f63986_2b4a_438d_b1b1_fb08c9e1c862_ctl00_HistoryData1_dailyFromCalendar_TaseCalendar_dateInput_TextBox').val('",df$from.date,"');"), args = list())
-  con$executeScript(paste0("$('#ctl00_SPWebPartManager1_g_b2f63986_2b4a_438d_b1b1_fb08c9e1c862_ctl00_HistoryData1_dailyToCalendar_TaseCalendar_dateInput_TextBox').val('",df$to.date,"');"), args = list())
+  con$executeScript(paste0("$('#",prefix,"dailyFromCalendar_TaseCalendar_dateInput_TextBox').val('",df$from.date,"');"), args = list())
+  con$executeScript(paste0("$('#",prefix,"dailyToCalendar_TaseCalendar_dateInput_TextBox').val('",df$to.date,"');"), args = list())
   #click button
   con$executeScript("$('#trhistory0').find(':button').click();", args = list())
   #wait for data to load
@@ -24,9 +25,10 @@ tase.index.daily=ddply(df.in,.(Name),.fun = function(df){
   out=htmlParse(con$getPageSource(),asText = T)
   dataNode=getNodeSet(out,"//table[contains(@id,'gridHistoryData_DataGrid1')]")
   #parse table into data.frame
-  tase.out=readHTMLTable(dataNode[[1]],header = T)%>%
-    mutate_each(funs(as.Date(.,"%d/%m/%Y")),contains("date"))%>%
-    mutate_each(funs(as.numeric(gsub("[,|%]","",.))),-contains("date"),-ends_with("type"))
+  tase.out=readHTMLTable(dataNode[[1]],header = T,stringsAsFactors = F)%>%
+    mutate_each(funs(as.Date(.,"%d/%m/%Y")),contains("Date"))%>%
+    mutate_each(funs(as.numeric(gsub("[,|%]","",.))),-contains("Date"))
+    #mutate_each(funs(as.numeric(gsub("[,|%]","",.))),-contains("Date"),-ends_with("type"))
   return(tase.out)},
   .progress = "text")
 
